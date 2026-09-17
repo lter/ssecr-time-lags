@@ -1,4 +1,4 @@
-# [Group Type] Time Lags
+# Time Lags [SSECR 2026] 
 
 Principal Investigators: Jared Collins, Yasas Gamagedara, Nicholas Medina, Katie Polik, Sa'ad Rafie, Sainfort Vital
 
