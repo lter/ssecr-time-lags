@@ -1,6 +1,8 @@
-# [Group Type] Group Title
+# [Group Type] Time Lags
 
-Principal Investigators: _Name, Name, ..._
+Principal Investigators: Jared Collins, Yasas Gamagedara, Nicholas Medina, Katie Polik, Sa'ad Rafie, Sainfort Vital
+
+Using Information Theory to capture time lags from nutrient inputs to outputs and comparing them across landscapes.
 
 ## Script Explanations
 
