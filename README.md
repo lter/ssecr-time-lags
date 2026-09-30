@@ -4,6 +4,9 @@ Principal Investigators: Jared Collins, Yasas Gamagedara, Nicholas Medina, Katie
 
 Using Information Theory to capture time lags from nutrient inputs to outputs and comparing them across landscapes.
 
+## Primary Research Question:
+How do time lags between nutrient inputs and outputs change across tropical (Luquillo LTER) and temperate (Hubbard Brook LTER) ecosystems? 
+
 ## Script Explanations
 
 Briefly describe the purpose of major scripts as you create them!
