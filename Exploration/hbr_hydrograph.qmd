@@ -1,0 +1,140 @@
+---
+title: 'Time Lags Hydrograph Generation'
+author: Jared Collins
+date: 10/27/2026
+format: html_document
+---
+Packages
+```{r}
+library('dplyr')
+library('lubridate')
+library('ggplot2')
+library('googledrive')
+library('googlesheets4')
+library('readr')
+library('shiny')
+```
+
+Drive Authentication
+```{r}
+# Only need to run once per session if already authenticated
+drive_auth(scopes = 'https://www.googleapis.com/auth/drive.readonly')
+gs4_auth(scopes = 'https://www.googleapis.com/auth/spreadsheets.readonly')
+```
+
+Hubbard Brook Data Import
+```{r}
+# Using HBR as a test example for hydrograph generation
+hbr_dis = drive_read_string('https://drive.google.com/file/d/1bWDbbKfqcGqssSFsAYn9hEbpw_H93wWG/view?usp=drive_link') |>
+    read_csv()
+hbr_precip = drive_read_string('https://drive.google.com/file/d/1fDXUJD6b_iZriOLnsrQG3yKzl0GWgIM7/view?usp=drive_link') |>
+    read_csv()
+```
+
+Climatology Calculation
+```{r}
+# Function to calculate daily climatology
+daily_climatology <- function(data, site_col, value_col, date_col = 'DATE') {
+  data |>
+    mutate(DATE = as.Date(.data[[date_col]]), Year = year(DATE), Month = month(DATE), Day = day(DATE)) |>
+
+    # Exclude February 29
+    filter(!(Month == 2 & Day == 29)) |>
+
+    # Ensure one daily value per site per year
+    group_by(Site = .data[[site_col]], Year, Month, Day) |>
+    summarise(Value = if (all(is.na(.data[[value_col]]))) {NA_real_
+      } else {mean(.data[[value_col]], na.rm = TRUE)},.groups = 'drop') |>
+
+    # Calculate statistics across years
+    group_by(Site, Month, Day) |>
+    summarise(Mean = if (all(is.na(Value))) NA_real_
+             else mean(Value, na.rm = TRUE),
+      P10 = if (all(is.na(Value))) NA_real_
+            else as.numeric(quantile(Value, 0.10, na.rm = TRUE)),
+      P90 = if (all(is.na(Value))) NA_real_
+            else as.numeric(quantile(Value, 0.90, na.rm = TRUE)),
+      N_years = sum(!is.na(Value)),.groups = 'drop') |>
+
+    # Create a common plotting date
+    mutate(PlotDate = as.Date(sprintf('2001-%02d-%02d', Month, Day))) |>
+    arrange(Site, PlotDate)}
+```
+
+```{r}
+# Streamflow climatology
+hbr_dis_clim <- daily_climatology(data = hbr_dis, site_col = "WS", value_col = "Streamflow")
+
+# Precipitation climatology
+hbr_precip_clim <- daily_climatology(data = hbr_precip, site_col = "rainGage", value_col = "Precip")
+```
+
+Climatology Plot
+```{r}
+# Function for plotting climatology
+plot_climatology <- function(stream_site, precip_site, dis_data = hbr_dis_clim, precip_data = hbr_precip_clim) {
+  # Filter selected monitoring locations
+  dis <- dis_data |>
+    filter(Site == stream_site) |>
+    arrange(PlotDate)
+  precip <- precip_data |>
+    filter(Site == precip_site) |>
+    arrange(PlotDate)
+  if (nrow(dis) == 0 || nrow(precip) == 0) {stop("One or both selected sites were not found.")}
+
+  # Calculate scaling factor for secondary axis
+  max_dis <- max(dis$P90, na.rm = TRUE)
+  max_precip <- max(precip$Mean, na.rm = TRUE)
+  if (!is.finite(max_dis) || !is.finite(max_precip) ||
+      max_dis <= 0 || max_precip <= 0) {stop("Both datasets need positive, finite values for plotting.")}
+  scale_factor <- max_dis / max_precip
+
+  # Create combined plot
+  ggplot() +
+
+    # Precipitation bars
+    geom_col(data = precip, aes(x = PlotDate, y = Mean * scale_factor, fill = "Precipitation"), width = 0.9, alpha = 0.45) +
+
+    # Streamflow percentile envelope
+    geom_ribbon(data = dis, aes( x = PlotDate, ymin = P10, ymax = P90, fill = "Streamflow 10–90%"), alpha = 0.3) +
+
+    # Mean streamflow
+    geom_line(data = dis, aes( x = PlotDate, y = Mean, color = "Mean Streamflow"), linewidth = 1) +
+
+    # Dual y-axis
+    scale_y_continuous(name = "Streamflow",sec.axis = sec_axis(~ . / scale_factor, name = "Precipitation"),
+      expand = expansion(mult = c(0, 0.05))) +
+
+    # Monthly x-axis
+    scale_x_date(date_breaks = "1 month", date_labels = "%b", expand = expansion(mult = c(0.01, 0.01))) +
+
+    # Colors, labels, and theme
+    scale_fill_manual(values = c("Precipitation" = "grey50", "Streamflow 10–90%" = "steelblue")) +
+    scale_color_manual(values = c("Mean Streamflow" = "steelblue4")) +
+    labs(title = "HBR Hydrologic Climatology",subtitle = paste("Streamflow:", stream_site,
+        "| Precipitation:", precip_site), x = "Month", fill = NULL, color = NULL) +
+    theme_bw(base_size = 12) +
+    theme(plot.title = element_text(face = "bold", size = 15),
+      plot.subtitle = element_text(size = 11),
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      legend.position = "bottom",
+      panel.grid.minor = element_blank())}
+```
+
+```{r}
+# Select watersheds/rain gage location
+plot_climatology(
+  stream_site = "1",
+  precip_site = "RG1"
+)
+```
+
+```{r}
+ui <- fluidPage(titlePanel("HBR Hydrologic Climatology"),
+  fluidRow(column(6, selectInput("stream_site", "Streamflow Site",choices = sort(unique(hbr_dis_clim$Site)))),
+    column(6,selectInput("precip_site", "Precipitation Site", choices = sort(unique(hbr_precip_clim$Site))))),
+  plotOutput("climatology_plot", height = "550px"))
+server <- function(input, output, session) {
+  output$climatology_plot <- renderPlot({plot_climatology(stream_site = input$stream_site, precip_site = input$precip_site)})}
+shinyApp(ui, server)
+```
