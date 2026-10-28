@@ -16,6 +16,18 @@ Read in data
 HBR_StrChem <- read.csv(here("Data","HBR_StrChem_1963-2025.csv")) %>%
   mutate(date = as.Date(date))
 glimpse(HBR_StrChem)
+
+HBR_StrDis <- read.csv(here("Data","HBR_StrDis_1956-2024.csv")) %>%
+  mutate(date = as.Date(DATE)) %>% select(-DATE)
+glimpse(HBR_StrDis)
+
+HBR_PrecChem <- read.csv(here("Data","HBR_PrecChem_1963-2025.csv")) %>%
+  mutate(date = as.Date(date))
+glimpse(HBR_PrecChem)
+
+HBR_PrecVol <- read.csv(here("Data","HBR_PrecVol_1956-2026.csv")) %>%
+  mutate(date = as.Date(DATE)) %>% select(-DATE)
+glimpse(HBR_PrecVol)
 ```
 
 Summarize
@@ -25,5 +37,28 @@ HBR_StrChem_summary <- HBR_StrChem %>%
   pivot_longer(cols = c(NO3, NH4, TDN, DON), names_to = "analyte", values_to = "value") %>%
   filter_out(is.na(value)) %>%
   group_by(site, analyte) %>%
+  summarise(n = n(), start = min(date), end = max(date))
+```
+
+```{r}
+HBR_PrecChem_summary <- HBR_PrecChem %>%
+  select(site, date, precipCatch, NO3, NH4, TDN, DON) %>%
+  pivot_longer(cols = c(precipCatch, NO3, NH4, TDN, DON), names_to = "analyte", values_to = "value") %>%
+  filter_out(is.na(value)) %>%
+  group_by(site, analyte) %>%
+  summarise(n = n(), start = min(date), end = max(date))
+```
+
+```{r}
+HBR_PrecVol_summary <- HBR_PrecVol %>%
+  filter_out(is.na(Precip)) %>%
+  group_by(rainGage) %>%
+  summarise(n = n(), start = min(date), end = max(date))
+```
+
+```{r}
+HBR_StrDis_summary <- HBR_StrDis %>%
+  filter_out(is.na(Streamflow)) %>%
+  group_by(WS) %>%
   summarise(n = n(), start = min(date), end = max(date))
 ```
