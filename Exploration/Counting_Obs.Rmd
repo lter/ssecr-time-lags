@@ -15,22 +15,56 @@ Read in data
 ```{r}
 HBR_StrChem <- read.csv(here("Data","HBR_StrChem_1963-2025.csv")) %>%
   mutate(date = as.Date(date))
-glimpse(HBR_StrChem)
+#glimpse(HBR_StrChem)
 
 HBR_StrDis <- read.csv(here("Data","HBR_StrDis_1956-2024.csv")) %>%
   mutate(date = as.Date(DATE)) %>% select(-DATE)
-glimpse(HBR_StrDis)
+#glimpse(HBR_StrDis)
 
 HBR_PrecChem <- read.csv(here("Data","HBR_PrecChem_1963-2025.csv")) %>%
   mutate(date = as.Date(date))
-glimpse(HBR_PrecChem)
+#glimpse(HBR_PrecChem)
 
 HBR_PrecVol <- read.csv(here("Data","HBR_PrecVol_1956-2026.csv")) %>%
   mutate(date = as.Date(DATE)) %>% select(-DATE)
-glimpse(HBR_PrecVol)
+#glimpse(HBR_PrecVol)
+
+KNZ_StrDis1 <- read.csv(here("Data","KNZ_StrDis_01.csv")) %>%
+  mutate(date = as.Date(date, format = "%m/%d/%Y"))
+KNZ_StrDis2 <- read.csv(here("Data","KNZ_StrDis_02-2_year.csv"), na.strings = ".") %>%
+  mutate(date = make_date(RECYEAR, RECMONTH, RECDAY)) %>%
+  filter_out(is.na(VOLUME))
+KNZ_StrDis3 <- read.csv(here("Data","KNZ_StrDis_03-2_year.csv"), na.strings = ".") %>%
+  mutate(date = make_date(RECYEAR, RECMONTH, RECDAY)) %>%
+  filter_out(is.na(VOLUME))
+KNZ_StrDis4 <- read.csv(here("Data","KNZ_StrDis_04-2_year.csv"), na.strings = ".") %>%
+  mutate(date = make_date(RECYEAR, RECMONTH, RECDAY)) %>%
+  filter_out(is.na(VOLUME))
+KNZ_StrDis5 <- read.csv(here("Data","KNZ_StrDis_05-2_year.csv"), na.strings = ".") %>%
+  mutate(date = make_date(RECYEAR, RECMONTH, RECDAY)) %>%
+  filter_out(is.na(VOLUME))
+
+KNZ_StrDis2b <- read.csv(here("Data","KNZ_StrDis_02-1_year.csv"))
+KNZ_StrDis3b <- read.csv(here("Data","KNZ_StrDis_03-1_year.csv"))
+KNZ_StrDis4b <- read.csv(here("Data","KNZ_StrDis_04-1_year.csv"))
+KNZ_StrDis5b <- read.csv(here("Data","KNZ_StrDis_05-1_year.csv"))
+
+KNZ_StrChem <- read.csv(here("Data","KNZ_StrChem_year.csv")) %>%
+  mutate(date = make_date(RecYear, RecMonth, RecDay))
+
+KNZ_Precip_HDQ <- read.csv(here("Data","KNZ_PrecVol_PrecChem_01_year.csv")) %>%
+  mutate(dateon = as.Date(dateon, format = "%m/%d/%Y"),
+         dateoff = as.Date(dateoff, format = "%m/%d/%Y"))
+KNZ_Precip_all <- read.csv(here("Data","KNZ_PrecVol_PrecChem_02_year.csv")) %>%
+  mutate(date = make_date(RecYear, RecMonth, RecDay),
+         Watershed = Watershed %>% replace_values("n01b" ~ "N01B", 
+                                                  "r20b" ~ "R20B", 
+                                                  "020b" ~ "020B", 
+                                                  c("00HQ", "00hq") ~ "hq"))
+
 ```
 
-Summarize
+Summarize HBR
 ```{r}
 HBR_StrChem_summary <- HBR_StrChem %>%
   select(site, date, NO3, NH4, TDN, DON) %>%
@@ -38,27 +72,36 @@ HBR_StrChem_summary <- HBR_StrChem %>%
   filter_out(is.na(value)) %>%
   group_by(site, analyte) %>%
   summarise(n = n(), start = min(date), end = max(date))
-```
 
-```{r}
 HBR_PrecChem_summary <- HBR_PrecChem %>%
   select(site, date, precipCatch, NO3, NH4, TDN, DON) %>%
   pivot_longer(cols = c(precipCatch, NO3, NH4, TDN, DON), names_to = "analyte", values_to = "value") %>%
   filter_out(is.na(value)) %>%
   group_by(site, analyte) %>%
   summarise(n = n(), start = min(date), end = max(date))
-```
 
-```{r}
 HBR_PrecVol_summary <- HBR_PrecVol %>%
   filter_out(is.na(Precip)) %>%
   group_by(rainGage) %>%
   summarise(n = n(), start = min(date), end = max(date))
-```
 
-```{r}
 HBR_StrDis_summary <- HBR_StrDis %>%
   filter_out(is.na(Streamflow)) %>%
   group_by(WS) %>%
   summarise(n = n(), start = min(date), end = max(date))
+```
+
+Summarize KNZ
+```{r}
+KNZ_Prec_summary <- KNZ_Precip_all %>%
+  group_by(Watershed) %>%
+  summarise(n = n(), start = min(date, na.rm = T), end = max(date, na.rm = T))
+
+min(KNZ_Precip_HDQ$dateon)
+max(KNZ_Precip_HDQ$dateoff)
+
+KNZ_StrChem_summary <- KNZ_StrChem %>%
+  group_by(WATERSHED) %>%
+  summarise(n = n(), start = min(date, na.rm = T), end = max(date, na.rm = T))
+
 ```
