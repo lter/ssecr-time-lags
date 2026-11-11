@@ -1,0 +1,5 @@
+# Local copies of source data and generated tables; not tracked.
+/data_raw/
+/data_precleaned/
+__pycache__/
+.venv/
