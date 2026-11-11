@@ -1,0 +1,172 @@
+---
+title: "Rain Gage Comparison"
+author: "Catherine A Polik"
+date: "2026-11-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(here)
+library(patchwork)
+library(corrplot)
+```
+
+
+```{r}
+precip.chem <- read.csv(here("Data","HBR_PrecChem_1963-2025.csv"))
+RG1 <- precip.chem %>% filter(site == "RG1") %>%
+  select(site, date, NO3, NH4, Cl)
+RG11 <- precip.chem %>% filter(site == "RG11") %>%
+  select(site, date, NO3, NH4, Cl)
+HDQ <- precip.chem %>% filter(site == "RG22") %>%
+  select(site, date, NO3, NH4, Cl)
+
+compare <- left_join(RG1, RG11, by = "date")
+hdq.compare <- left_join(RG1, HDQ, by = "date")
+```
+
+```{r}
+p1 <- ggplot(compare, aes(x = NO3.x, y = NO3.y)) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "grey25") +
+  geom_point() +
+  coord_equal() +
+  theme_classic() +
+  xlab("RG1 (Nitrate)") +
+  ylab("RG11 (Nitrate)") +
+  ggtitle("Nitrate")
+
+p2 <- ggplot(compare, aes(x = NH4.x, y = NH4.y)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "grey25") +
+  geom_point() +
+  coord_equal() +
+  ylim(0,7) + xlim(0,7) +
+  theme_classic() +
+  xlab("RG1 (Ammonia)") +
+  ylab("RG11 (Ammonia)") +
+  ggtitle("Ammonia")
+
+p3 <- ggplot(compare, aes(x = Cl.x, y = Cl.y)) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "grey25") +
+  geom_point() +
+  coord_equal() +
+  ylim(0,4) + xlim(0,4) +
+  theme_classic() +
+  xlab("RG1 (Cl)") +
+  ylab("RG11 (Cl)") +
+  ggtitle("Chloride")
+
+p1 + p2 + p3 + plot_annotation(
+  title = "South-Facing Slope",
+  theme = theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 16)))
+
+ggsave("Chem_Intracompare.jpg")
+
+```
+
+```{r}
+p1 <- ggplot(hdq.compare, aes(x = NO3.x, y = NO3.y)) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "grey25") +
+  geom_point() +
+  coord_equal() +
+  theme_classic() +
+  xlab("RG1 (Nitrate)") +
+  ylab("HDQ (Nitrate)") +
+  ggtitle("Nitrate")
+
+p2 <- ggplot(hdq.compare, aes(x = NH4.x, y = NH4.y)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "grey25") +
+  geom_point() +
+  coord_equal() +
+  ylim(0,16) + xlim(0,16) +
+  theme_classic() +
+  xlab("RG1 (Ammonia)") +
+  ylab("HDQ (Ammonia)") +
+  ggtitle("Ammonia")
+
+p3 <- ggplot(hdq.compare, aes(x = Cl.x, y = Cl.y)) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "grey25") +
+  geom_point() +
+  coord_equal() +
+  ylim(0,4) + xlim(0,4) +
+  theme_classic() +
+  xlab("RG1 (Cl)") +
+  ylab("HDQ (Cl)") +
+  ggtitle("Chloride")
+
+p1 + p2 + p3 + plot_annotation(
+  title = "Headquarters vs South-Facing Slope",
+  theme = theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 16)))
+
+ggsave("Chem_Intercompare.jpg")
+
+```
+
+```{r}
+precip.vol <- read.csv(here("Data","HBR_PrecVol_1956-2026.csv"))
+RG1.vol <- precip.vol %>% filter(rainGage == "RG1") 
+RG11.vol <- precip.vol %>% filter(rainGage == "RG11")
+HDQ.vol <- precip.vol %>% filter(rainGage == "RG22")
+
+compare.vol <- left_join(RG1.vol, RG11.vol, by = "DATE")
+hdq.compare.vol <- left_join(RG1.vol, HDQ.vol, by = "DATE")
+vol.all <- precip.vol %>% pivot_wider(names_from = "rainGage", values_from = "Precip") %>%
+  mutate(DATE = as.POSIXct(DATE)) %>%
+  filter(DATE >= "1997-01-05" & DATE <= "2014-12-31") %>%
+  select(-RG18, -DATE)
+
+vol.nozero <- vol.all[rowSums(vol.all != 0) > 0, ]
+```
+
+```{r}
+p1 <- ggplot(compare.vol, aes(x = Precip.x, y = Precip.y)) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "grey25") +
+  geom_point() +
+  coord_equal() +
+  theme_classic() +
+   ylim(0,150) + xlim(0,150) +
+  xlab("RG1") +
+  ylab("RG11") +
+  ggtitle("South-Facing Intercompare")
+
+p2 <- ggplot(hdq.compare.vol, aes(x = Precip.x, y = Precip.y)) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "grey25") +
+  geom_point() +
+  coord_equal() +
+  theme_classic() +
+   ylim(0,150) + xlim(0,150) +
+  xlab("RG1") +
+  ylab("Headquarters") +
+  ggtitle("South-Facing vs HDQ")
+
+p1 + p2 + plot_annotation(
+  title = "Rain Volume",
+  theme = theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 16)))
+
+ggsave("Vol_Compare.jpg")
+
+```
+
+
+```{r}
+
+corr1 <- round(cor(vol.all), 3)
+
+corrplot(corr1, order = 'hclust', addrect = 3)
+
+
+
+png("CorrPlot.png", width = 800, height = 800, res = 120)
+
+corrplot(corr1, 
+         is.corr = FALSE, 
+         col.lim = c(0.9, 1), 
+         cl.lim = c(0.9, 1),
+         order = 'hclust', addrect = 3)
+
+dev.off()
+
+
+```
