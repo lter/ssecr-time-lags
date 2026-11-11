@@ -75,8 +75,8 @@ dplyr::glimpse(discharge_bare) # check character-to-date is correct
 
 precip_bare_binned_daily <- precip_bare |>
   dplyr::summarize(
-    NO3_Final_binned_daily = mean(NO3_Final, na.rm = TRUE), # NAs ignored within a day
-    NH4ugNL_Final_binned_daily = mean(NH4ugNL_Final, na.rm = TRUE), # NAs ignored within a day
+    precip_NO3_Final_binned_daily = mean(NO3_Final, na.rm = TRUE), # NAs ignored within a day
+    precip_NH4ugNL_Final_binned_daily = mean(NH4ugNL_Final, na.rm = TRUE), # NAs ignored within a day
     .by = 'CollectionDate'
   )
 length(discharge_bare_binned_daily$CollectionDate) #check n rows 
@@ -84,8 +84,8 @@ length(discharge_bare_binned_daily$CollectionDate) #check n rows
 
 stream_bare_binned_daily <- stream_bare |>
   dplyr::summarize(
-    NO3_Final_binned_daily = mean(NO3_Final, na.rm = TRUE),
-    NH4ugNL_Final_binned_daily = mean(NH4ugNL_Final, na.rm = TRUE),
+    stream_NO3_Final_binned_daily = mean(NO3_Final, na.rm = TRUE),
+    stream_NH4ugNL_Final_binned_daily = mean(NH4ugNL_Final, na.rm = TRUE),
     .by = 'CollectionDate'
   )
 length(stream_bare_binned_daily$CollectionDate) #check n rows is the same
@@ -93,8 +93,8 @@ length(stream_bare_binned_daily$CollectionDate) #check n rows is the same
 
 discharge_bare_binned_daily <- stream_bare |>
   dplyr::summarize(
-    NO3_Final_binned_daily = mean(NO3_Final, na.rm = TRUE), 
-    NH4ugNL_Final_binned_daily = mean(NH4ugNL_Final, na.rm = TRUE),
+    discharge_NO3_Final_binned_daily = mean(NO3_Final, na.rm = TRUE),
+    discharge_NH4ugNL_Final_binned_daily = mean(NH4ugNL_Final, na.rm = TRUE),
     .by = 'CollectionDate'
   )
 length(discharge_bare_binned_daily$CollectionDate) #check n rows is the same
@@ -103,11 +103,11 @@ length(discharge_bare_binned_daily$CollectionDate) #check n rows is the same
 
 
 ```{r pair_shared_dates}
-HBR_paired_data <- inner_join(
-    precip_bare_binned_daily, 
-    stream_bare_binned_daily, 
-    discharge_bare_binned_daily,
-    by = 'CollectionDate'
-)
+HBR_paired_data <- dplyr::inner_join(
+  precip_bare_binned_daily,
+  stream_bare_binned_daily,
+  by = 'CollectionDate'
+) |>
+  dplyr::inner_join(discharge_bare_binned_daily, by = 'CollectionDate')
 # write.csv(HBR_paired_data, here::here('Pairing_HBR/HBR_paired_data.csv'))
 ```
