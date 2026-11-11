@@ -18,8 +18,8 @@ Output goes to `data_precleaned/`. Won't overwrite unless you add `--overwrite`.
 Optional, to pull the csvs from the drive folder instead of downloading by hand:
 
 ```bash
-pip install -r requirements-download.txt
-python download_data.py
+pip install -r Precleaning_HBR/requirements-download.txt
+python Precleaning_HBR/download_data.py
 ```
 
 Only downloads files that are missing from `data_raw/`, never replaces ones we already have. The drive folder needs to be shared as anyone with the link.

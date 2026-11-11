@@ -1,1 +1,16 @@
 gdown==5.2.0
+
+
+numpy
+scipy
+matplotlib
+pandas
+scikit-learn
+ipywidgets
+joblib
+tqdm
+numcodecs
+zarr
+xarray
+termcolor
+mpl-chord-diagram==0.3.2

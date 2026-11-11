@@ -1,0 +1,113 @@
+---
+title: "Pairing_HBR"
+format: html
+---
+
+Maybe turn into 1 R script for sourcing later
+
+Output in Pairing_HBR/
+
+```{r setup}
+knitr::opts_chunk$set(echo=F, warnings=F, message=F)
+
+#dependencies
+library(here)
+library(reticulate)
+reticulate::virtualenv_create('lter-ssecr-time-lags') # add requirements here?
+reticulate::use_virtualenv('lter-ssecr-time-lags') # hopefully helps
+reticulate::py_config() #check
+```
+
+```{python if_needed}
+
+```
+
+```{r pre_run}
+library(reticulate)
+# make sure to get requirements-download.txt  # now includes hydrobench
+reticulate::py_install(
+  packages = readLines(here::here('Precleaning_HBR/requirements-download.txt')),
+  envname = 'lter-ssecr-time-lags'
+)
+reticulate::source_python(here::here('Precleaning_HBR/download_data.py'))
+reticulate::source_python(here::here('Precleaning_HBR/download_data.py'))
+```
+
+
+```{r import}
+# import python output pre-cleaned data files
+# probably turn this into for-loop later
+precip <- read.csv(here::here('Precleaning_HBR/data_precleaned/HBR_RG11_precip_precleaned.csv'))
+stream <- read.csv(here::here('Precleaning_HBR/data_precleaned/HBR_W6_stream_precleaned.csv'))
+discharge <- read.csv(here::here('Precleaning_HBR/data_precleaned/HBR_WS6_discharge_precleaned.csv'))
+
+#see
+dplyr::glimpse(precip)
+dplyr::glimpse(stream)
+dplyr::glimpse(discharge)
+```
+
+```{r clean}
+library(lubridate)
+
+# keep only minimal data needed
+# same column names
+precip_bare <- precip |> 
+    dplyr::mutate(CollectionDate = lubridate::date(DateTime)) |> 
+    dplyr::select(CollectionDate, NO3_Final, NH4ugNL_Final)
+
+stream_bare <- stream |>
+  dplyr::rename(NH4ugNL_Final = NH4ugNL) |> #assumed
+  dplyr::mutate(CollectionDate = lubridate::mdy(CollectionDate)) |>
+  dplyr::select(CollectionDate, NO3_Final, NH4ugNL_Final)
+dplyr::glimpse(stream_bare) # check character-to-date is correct
+
+discharge_bare <- discharge |>
+  dplyr::select(datetime, Q_mm_day) |>
+  dplyr::mutate(CollectionDate = lubridate::date(datetime))
+dplyr::glimpse(discharge_bare) # check character-to-date is correct
+```
+
+```{r bin_dates}
+# same time resolutions
+# NAs ignored within a day
+# saved in case want to fork/build on this step later
+
+precip_bare_binned_daily <- precip_bare |>
+  dplyr::summarize(
+    NO3_Final_binned_daily = mean(NO3_Final, na.rm = TRUE), # NAs ignored within a day
+    NH4ugNL_Final_binned_daily = mean(NH4ugNL_Final, na.rm = TRUE), # NAs ignored within a day
+    .by = 'CollectionDate'
+  )
+length(discharge_bare_binned_daily$CollectionDate) #check n rows 
+# write.csv(precip_bare_binned_daily, here::here('Pairing_HBR/data_binned/precip_bare_binned_daily.csv'))
+
+stream_bare_binned_daily <- stream_bare |>
+  dplyr::summarize(
+    NO3_Final_binned_daily = mean(NO3_Final, na.rm = TRUE),
+    NH4ugNL_Final_binned_daily = mean(NH4ugNL_Final, na.rm = TRUE),
+    .by = 'CollectionDate'
+  )
+length(stream_bare_binned_daily$CollectionDate) #check n rows is the same
+# write.csv(stream_bare_binned_daily, here::here('Pairing_HBR/data_binned/stream_bare_binned_daily.csv'))
+
+discharge_bare_binned_daily <- stream_bare |>
+  dplyr::summarize(
+    NO3_Final_binned_daily = mean(NO3_Final, na.rm = TRUE), 
+    NH4ugNL_Final_binned_daily = mean(NH4ugNL_Final, na.rm = TRUE),
+    .by = 'CollectionDate'
+  )
+length(discharge_bare_binned_daily$CollectionDate) #check n rows is the same
+# write.csv(discharge_bare_binned_daily, here::here('Pairing_HBR/data_binned/discharge_bare_binned_daily.csv'))
+```
+
+
+```{r pair_shared_dates}
+HBR_paired_data <- inner_join(
+    precip_bare_binned_daily, 
+    stream_bare_binned_daily, 
+    discharge_bare_binned_daily,
+    by = 'CollectionDate'
+)
+# write.csv(HBR_paired_data, here::here('Pairing_HBR/HBR_paired_data.csv'))
+```
