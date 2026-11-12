@@ -10,7 +10,7 @@ The headings and prompts below are intended to guide and facilitate substantive 
 
 Core products are those directly underpinned by the course-related research question, data acquisition, and processing.
 
-- *What is your group definition of a core product?*
+- *What is your group definition of a core product?* 
 - *What type of contribution warrants authorship of core products? Is group membership sufficient?*
 - *Are there different requirements for data products than papers?* *How will you determine author order?*
   - Note that different disciplines have different conventions regarding the meaning of author order. Be sure you understand how it will be interpreted in the relevant fields and journals
@@ -31,13 +31,13 @@ Synthesis teams are rarely static. If you continue with this project after the c
 
 ## *Leaving* the Team
 
-- *How should they communicate their intention?*
-- *Does course participation imply a minimum level of formal credit? If so, what? If not, what else is required?*
-- *If they later want to re-engage, what is the process?*
+- *How should they communicate their intention?* By any form to everyone, email or Slack.
+- *Does course participation imply a minimum level of formal credit? If so, what? If not, what else is required?* Enough for acknowledgement, but authorship requires more.
+- *If they later want to re-engage, what is the process?* Contact everyone and say intention for level of engagement, and also re-onboard with someone to get caught up on finer tasks.
 
 ## *Joining* the Team
 
-- *How should they indicate their interest?*
+- *How should they indicate their interest?* Same as for previous section.
 - *What level of commitment or effort will you expect? How will that be communicated?*
 - *Are authorship requirements the same for newcomers as for existing team members?* *Where do they fit in the author order?*
 
